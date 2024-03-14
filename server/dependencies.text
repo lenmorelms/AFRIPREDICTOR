@@ -1,0 +1,7 @@
+express
+mongoose
+jsonwebtoken
+express-async-handler
+bcryptjs
+dotenv
+cors

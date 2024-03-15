@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDatabase from "./config/MongoDb.js";
+// import connectDatabase from "./config/MongoDb.js";
+import connectDatabase from "./config/mongoDB.js"
 import { errorHandler, notFound } from "./Middleware/Erros.js";
 import userRouter from "./Routes/UserRoutes.js";
 import tournamentsRoutes from "./Routes/TournamentsRoutes.js";

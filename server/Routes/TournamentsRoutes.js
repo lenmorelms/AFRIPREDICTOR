@@ -13,7 +13,7 @@ const tournamentsRoutes = express.Router();
 // Get all categories
 tournamentsRoutes.get(
     "/categories",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const categories = await Tournaments.distinct("category");
         if(categories) {

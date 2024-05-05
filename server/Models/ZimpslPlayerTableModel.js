@@ -54,6 +54,12 @@ const zimpslplayertableSchema = mongoose.Schema(
         timestamps: true,
     }
 );
+zimpslplayertableSchema.virtual('position').get(function() {
+    const currentPage = parseInt(this._req.query.page) || 1;
+    const limit = 6; // Number of documents per page
+    const currentIndex = this.parent().toArray().indexOf(this);
+    return (currentPage - 1) * limit + currentIndex + 1;
+});
 
 const ZimpslPLayerTable = mongoose.model("ZimpslPLayerTable", zimpslplayertableSchema);
 

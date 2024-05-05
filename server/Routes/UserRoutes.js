@@ -1,11 +1,21 @@
 import express from "express";
 import asyncHandler from "express-async-handler";
+import sanitize from "sanitize-html";
 import { protect, admin } from "../Middleware/AuthMiddleware.js";
 import generateToken from "../utils/generateToken.js";
 import User from "./../Models/UserModel.js";
+import sendVerificationEmail, { transporter } from "../utils/email.js";
 
 const userRouter = express.Router();
 
+function sanitizeInput(input) {
+    // Define allowed HTML tags and attributes
+    const cleanInput = sanitize(input, {
+        allowedTags: [],
+        allowedAttributes: {}
+    });
+    return cleanInput;
+}
 // LOGIN
 userRouter.post(
   "/login",
@@ -37,7 +47,8 @@ userRouter.post(
 userRouter.post(
   "/register",
   asyncHandler(async (req, res) => {
-    const { email, username, age, gender, country, password, isAdmin } = req.body;
+    const { email, username, age, gender, country, isAdmin } = req.body;
+    const password = sanitizeInput(req.body.password);
 
     const userExists = await User.findOne({ email });
     const usernameTaken = await User.findOne({ username });
@@ -49,8 +60,10 @@ userRouter.post(
       res.status(400);
       throw new Error("Username taken")
     }
+    const verificationToken = Math.random().toString(36).substring(7);
 
-    const user = await User.create({ email, username, age, gender, country, password, isAdmin });
+    const user = await User.create({ email, username, age, gender, country, password, isAdmin, verificationToken });
+    await sendVerificationEmail(email, verificationToken, "register");
 
     if (user) {
       res.status(201).json({
@@ -70,14 +83,108 @@ userRouter.post(
     }
   })
 );
-
+// FORGOT PASSWORD
+userRouter.put(
+  "/forgot-password",
+  asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email });
+    if(user) {
+      const verificationToken = Math.random().toString(36).substring(3);
+      user.verificationToken = verificationToken;
+      await user.save();
+      await sendVerificationEmail(email, verificationToken, "forgot-password");
+      res.status(201).json({ email: user.email, message: "Email successfully sent" });
+    } else {
+      res.status(404);
+      throw new Error("Email does not exist");
+    }
+  })
+);
+// RESET PASSWORD
+userRouter.put(
+  "/reset-password",
+  asyncHandler(async (req, res) => {
+    const { token, password } = req.body;
+    const user = await User.findOne({ verificationToken: token });
+    if(user) {
+      user.password = sanitizeInput(password);
+      await user.save();
+      res.status(201).json({
+        _id: user._id,
+        username: user.username,
+        age: user.age,
+        gender: user.gender,
+        email: user.email,
+        country: user.country,
+        tournaments: user.tournaments,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+        createdAt: user.createdAt,
+      });
+    } else {
+      res.status(404);
+      throw new Error("Invalid verification token");
+    }
+  })
+);
+// RESEND CODE
+userRouter.get(
+  "/resend-code/:id",
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if(user) {
+      sendVerificationEmail(user.email, user.verificationToken, "register");
+      res.status(201).json({
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        age: user.age,
+        gender: user.gender,
+        country: user.country,
+        tournaments: [],
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(404);
+      throw new Error("Failed to resend verification code");
+    }
+  })
+);
+// VERIFY USER
+userRouter.put(
+  "/verify",
+  asyncHandler(async (req, res) => {
+    const { token } = req.body;
+    const user = await User.findOne({ verificationToken: token });
+    if(user) {
+      user.verified = true;
+      await user.save();
+      res.status(201).json({
+        _id: user._id,
+        username: user.username,
+        age: user.age,
+        gender: user.gender,
+        email: user.email,
+        country: user.country,
+        tournaments: user.tournaments,
+        isAdmin: user.isAdmin,
+        token: generateToken(user._id),
+        createdAt: user.createdAt,
+      });
+    } else {
+      res.status(404);
+      throw new Error("Invalid verification token");
+    }
+  })
+);
 // PROFILE
 userRouter.get(
   "/:id",
-  protect,
+  // protect,
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
-
     if (user) {
       res.json({
         _id: user._id,
@@ -99,10 +206,10 @@ userRouter.get(
 
 // UPDATE PROFILE
 userRouter.put(
-  "/profile",
-  protect,
+  "/profile/:id",
+  // protect,
   asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.params.id);
 
     if (user) {
       user.username = req.body.username || user.username;
@@ -254,5 +361,28 @@ userRouter.delete(
     }
   })
 );
+
+// SEND MAIL
+userRouter.post(
+  "/mail",
+  asyncHandler(async (req, res) => {
+    const { fullname, email, message } = req.body;
+
+    const mailOptions = {
+      from: email,
+      to: 'lmombe@zingaz.dev',
+      subject: "Message from AfriPredictor Contact Form",
+      text: `Name: ${fullname}\nEmail: ${email}\n\n${message}`
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: "Email Sent" });
+    } catch (error) {
+      res.status(404);
+      throw new Error("Failed to send email");
+    }
+  })
+)
 
 export default userRouter;

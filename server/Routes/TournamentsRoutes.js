@@ -24,25 +24,11 @@ tournamentsRoutes.get(
         }
     })
 );
-// Get all Zimpsl gameweeks
-tournamentsRoutes.get(
-    "/gameweeks",
-    protect,
-    asyncHandler(async (req, res) => {
-        const gameweeks = await Zimpsl.distinct("gameweek");
-        if(gameweeks) {
-            res.json(gameweeks);
-        } else {
-            res.status(404);
-            throw new Error("No categories found");
-        }
-    })
-);
 
 // Get all tournaments
 tournamentsRoutes.get(
     "/",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const tournaments = await Tournaments.find();
         if(tournaments) {
@@ -54,10 +40,38 @@ tournamentsRoutes.get(
     })
 );
 
+// Get all gameweeks
+tournamentsRoutes.get(
+    "/gameweeks/zimpsl",
+    // protect,
+    asyncHandler(async (req, res) => {
+        const zimpslGameweeks = await Zimpsl.distinct("gameweek");
+        if(zimpslGameweeks) {
+            res.json(zimpslGameweeks);
+        } else {
+            res.status(404);
+            throw new Error("No gameweeks found");
+        }
+    })
+);
+// Get player team for Zimpsl tourn
+tournamentsRoutes.get(
+    "/player/zimpsl/team",
+    asyncHandler(async (req, res) => {
+        const team = await User.findById(req.params.userId);
+        if(team) {
+            res.json(team);
+        } else {
+            res.status(404);
+            throw new Error("User does not exist");
+        }
+    })
+);
+
 // Get tournaments by category
 tournamentsRoutes.get(
     "/:category",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
      const tournaments = await Tournaments.find({ category: req.params.category });
      if(tournaments) {
@@ -72,7 +86,7 @@ tournamentsRoutes.get(
 // Join zimpsl tournament
 tournamentsRoutes.put(
     "/zimpsl/join",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const session = await mongoose.startSession();
         const { userId, username, tournament, team } = req.body;
@@ -122,25 +136,28 @@ tournamentsRoutes.put(
 // Get zimpsl fixures and results
 tournamentsRoutes.get(
     "/football/zimpsl/:id", // :id is the user objectId
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const zimpslFixtures = await Zimpsl.find().limit(9).sort({ date: -1 });
         let zimpslPlayerFixtures = [];
 
         if(zimpslFixtures) {
+            let fixtureCount = 1;
             for(let zimpslFixture of zimpslFixtures) {
                 const checkPlayerPrediction = await ZimpslPlayerResults.find({ userId: req.params.id, fixtureId: zimpslFixture._id });
                 if(checkPlayerPrediction.length === 0) {
-                    zimpslFixture = { ...zimpslFixture, playerPredicted: false };
+                    zimpslFixture = { ...zimpslFixture, playerPredicted: false, fixtureCount };
                     zimpslPlayerFixtures.push(zimpslFixture);
                 } else {
                     zimpslFixture = {
                         ...zimpslFixture,
                         playerPredicted: true,
+                        fixtureCount,
                         playerResult: checkPlayerPrediction[0]
                     };
                     zimpslPlayerFixtures.push(zimpslFixture);
                 }
+                fixtureCount++;
             };
             // TESTING
             const renderedFixtures = zimpslPlayerFixtures.map(obj => ({
@@ -154,6 +171,7 @@ tournamentsRoutes.get(
                 "score2": obj["_doc"]["score2"],
                 "result": obj["_doc"]["result"],
                 "playerPredicted": obj["playerPredicted"],
+                "fixtureCount": obj["fixtureCount"],
                 "playerResult": obj["playerResult"]
             }));
             res.json(renderedFixtures);
@@ -167,27 +185,45 @@ tournamentsRoutes.get(
 // Get zimpsl fixtures by gameweek
 tournamentsRoutes.get(
     "/football/zimpsl/:gameweek/:id",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const zimpslFixtures = await Zimpsl.find({ gameweek: req.params.gameweek }).sort({ date: -1 });
         let zimpslPlayerFixtures = [];
-        
+
         if(zimpslFixtures) {
+        let fixtureCount = 1;
             for(let zimpslFixture of zimpslFixtures) {
                 const checkPlayerPrediction = await ZimpslPlayerResults.find({ userId: req.params.id, fixtureId: zimpslFixture._id });
                 if(checkPlayerPrediction.length === 0) {
-                    zimpslFixture = { ...zimpslFixture, playerPredicted: false };
+                    zimpslFixture = { ...zimpslFixture, playerPredicted: false, fixtureCount };
                     zimpslPlayerFixtures.push(zimpslFixture);
                 } else {
                     zimpslFixture = {
                         ...zimpslFixture,
                         playerPredicted: true,
+                        fixtureCount,
                         playerResult: checkPlayerPrediction[0]
                     };
                     zimpslPlayerFixtures.push(zimpslFixture);
                 }
+                fixtureCount++;
             };
-            res.json(zimpslPlayerFixtures);
+            // TESTING
+            const renderedFixtures = zimpslPlayerFixtures.map(obj => ({
+                "_id": obj["_doc"]["_id"],
+                "date": obj["_doc"]["date"],
+                "gameweek": obj["_doc"]["gameweek"],
+                "kickoff": obj["_doc"]["kickoff"],
+                "team1": obj["_doc"]["team1"],
+                "score1": obj["_doc"]["score1"],
+                "team2": obj["_doc"]["team2"],
+                "score2": obj["_doc"]["score2"],
+                "result": obj["_doc"]["result"],
+                "playerPredicted": obj["playerPredicted"],
+                "fixtureCount": obj["fixtureCount"],
+                "playerResult": obj["playerResult"]
+            }));
+            res.json(renderedFixtures);
         } else {
             res.status(404);
             throw new Error("No new fixtures")
@@ -198,7 +234,7 @@ tournamentsRoutes.get(
 // Upload zimpsl results per player
 tournamentsRoutes.post(
     "/football/zimpsl",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const { userId, fixtureId, gameweek, score1, score2 } = req.body;
 
@@ -226,10 +262,10 @@ tournamentsRoutes.post(
 
 // Get zimpsl player leaderboard
 tournamentsRoutes.get(
-    "/football/zimpsl/leaderboard",
-    protect,
+    "/football/leaderboard/zimpsl",
+    // protect,
     asyncHandler(async (req, res) => {
-        const pageSize = 40;
+        const pageSize = 2;
         const page = Number(req.query.pageNumber) || 1;
         // const keyword = req.query.keyword
         //     ? {
@@ -247,8 +283,11 @@ tournamentsRoutes.get(
             .limit(pageSize)
             .skip(pageSize * (page - 1))
             .sort({ total_points: -1 });
+        
+        playerLeaderboard.forEach(player => { player._req = req });
         if(playerLeaderboard) {
-            res.json({ playerLeaderboard, page, pages: Math.ceil(count / pageSize) });
+            res.json({ playerLeaderboard, count, page, pages: Math.ceil(count / pageSize) });
+
         } else {
             res.status(404);
             throw new Error("Player leaderboard not found");
@@ -258,10 +297,10 @@ tournamentsRoutes.get(
 
 // Get zimpsl player leaderboard
 tournamentsRoutes.get(
-    "/football/zimpsl/leaderboard/:team",
-    protect,
+    "/football/leaderboard/zimpsl/:team",
+    // protect,
     asyncHandler(async (req, res) => {
-        const pageSize = 40;
+        const pageSize = 3;
         const page = Number(req.query.pageNumber) || 1;
 
         const count = await ZimpslPLayerTable.countDocuments({ team: req.params.team });
@@ -280,8 +319,8 @@ tournamentsRoutes.get(
 
 // Get zimpsl individual play points
 tournamentsRoutes.get(
-    "/football/zimpsl/leaderboard/:userId",
-    protect,
+    "/football/playerpoints/zimpsl/:userId",
+    // protect,
     asyncHandler(async (req, res) => {
         const playerPoints = await ZimpslPLayerTable.find({ userId: req.params.userId });
 

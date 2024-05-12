@@ -23,7 +23,7 @@ userRouter.post(
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
-    if (user && (await user.matchPassword(password))) {
+    if (user && (await user.matchPassword(password)) && (await user.verified === true)) {
       res.json({
         _id: user._id,
         username: user.username,

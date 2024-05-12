@@ -75,6 +75,7 @@ userRouter.post(
         country: user.country,
         tournaments: [],
         isAdmin: user.isAdmin,
+        verificationToken: user.verificationToken,
         token: generateToken(user._id),
       });
     } else {
@@ -120,6 +121,7 @@ userRouter.put(
         tournaments: user.tournaments,
         isAdmin: user.isAdmin,
         token: generateToken(user._id),
+        verificationToken: user.verificationToken,
         createdAt: user.createdAt,
       });
     } else {
@@ -144,6 +146,7 @@ userRouter.get(
         country: user.country,
         tournaments: [],
         isAdmin: user.isAdmin,
+        verificationToken: user.verificationToken,
         token: generateToken(user._id),
       });
     } else {

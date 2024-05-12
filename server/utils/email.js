@@ -22,7 +22,7 @@ const sendVerificationEmail = async (email, verificationToken, source) => {
         from: 'lmslernz@gmail.com',
         to: email,
         subject: 'Account Verification',
-        html: source === "register" ? `<p>Please click <a href="https://afripredictor-fe.vercel.app/verify/${verificationToken}">here</a> to verify your account.</p>` : `<p>Please click <a href="https://afripredictor-fe.vercel.app/reset-password/${verificationToken}">here</a> to reset your password.</p>`
+        html: source === "register" ? `<p>Please click <a href="https://afripredictor.com/verify/${verificationToken}">here</a> to verify your account.</p>` : `<p>Please click <a href="https://afripredictor.com/reset-password/${verificationToken}">here</a> to reset your password.</p>`
     };
 
     try {

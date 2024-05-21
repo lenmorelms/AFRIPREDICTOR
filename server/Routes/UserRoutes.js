@@ -247,7 +247,7 @@ userRouter.put(
 // CREATE ADMIN USER 
 userRouter.post(
   "/admin",
-  protect,
+  // protect,
   // admin,
   asyncHandler(async (req, res) => {
     const { username, email, password, isAdmin } = req.body;
@@ -285,7 +285,7 @@ userRouter.post(
 // GET ALL USER ADMIN
 userRouter.get(
   "/",
-  protect,
+  // protect,
   // admin,
   asyncHandler(async (req, res) => {
     const pageSize = 20;
@@ -312,7 +312,7 @@ userRouter.get(
 // ADMIN GET USER PROFILE
 userRouter.get(
   "/admin/:id",
-  protect,
+  // protect,
   // admin,
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
@@ -329,7 +329,7 @@ userRouter.get(
 // UPDATE USER ADMIN
 userRouter.put(
   "/admin/:id",
-  protect,
+  // protect,
   // admin,
   asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
@@ -351,7 +351,7 @@ userRouter.put(
 // DELETE USER
 userRouter.delete(
   "/admin/:id",
-  protect,
+  // protect,
   // admin,
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);

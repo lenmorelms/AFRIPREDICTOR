@@ -28,7 +28,7 @@ tournamentsRoutes.get(
 // Get all tournaments
 tournamentsRoutes.get(
     "/",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const tournaments = await Tournaments.find();
         if(tournaments) {
@@ -71,7 +71,7 @@ tournamentsRoutes.get(
 // Get tournaments by category
 tournamentsRoutes.get(
     "/:category",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
      const tournaments = await Tournaments.find({ category: req.params.category });
      if(tournaments) {
@@ -86,7 +86,7 @@ tournamentsRoutes.get(
 // Join zimpsl tournament
 tournamentsRoutes.put(
     "/zimpsl/join",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const session = await mongoose.startSession();
         const { userId, username, tournament, team } = req.body;
@@ -136,7 +136,7 @@ tournamentsRoutes.put(
 // Get zimpsl fixures and results
 tournamentsRoutes.get(
     "/football/zimpsl/:id", // :id is the user objectId
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const zimpslFixtures = await Zimpsl.find().limit(9).sort({ date: -1 });
         let zimpslPlayerFixtures = [];
@@ -185,7 +185,7 @@ tournamentsRoutes.get(
 // Get zimpsl fixtures by gameweek
 tournamentsRoutes.get(
     "/football/zimpsl/:gameweek/:id",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const zimpslFixtures = await Zimpsl.find({ gameweek: req.params.gameweek }).sort({ date: -1 });
         let zimpslPlayerFixtures = [];
@@ -234,7 +234,7 @@ tournamentsRoutes.get(
 // Upload zimpsl results per player
 tournamentsRoutes.post(
     "/football/zimpsl",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const { userId, fixtureId, gameweek, score1, score2 } = req.body;
 
@@ -263,7 +263,7 @@ tournamentsRoutes.post(
 // Get zimpsl player leaderboard
 tournamentsRoutes.get(
     "/football/leaderboard/zimpsl",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const pageSize = 2;
         const page = Number(req.query.pageNumber) || 1;
@@ -298,7 +298,7 @@ tournamentsRoutes.get(
 // Get zimpsl player leaderboard
 tournamentsRoutes.get(
     "/football/leaderboard/zimpsl/:team",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const pageSize = 3;
         const page = Number(req.query.pageNumber) || 1;
@@ -320,7 +320,7 @@ tournamentsRoutes.get(
 // Get zimpsl individual play points
 tournamentsRoutes.get(
     "/football/playerpoints/zimpsl/:userId",
-    protect,
+    // protect,
     asyncHandler(async (req, res) => {
         const playerPoints = await ZimpslPLayerTable.find({ userId: req.params.userId });
 

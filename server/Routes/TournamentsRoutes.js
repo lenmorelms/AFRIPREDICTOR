@@ -265,7 +265,7 @@ tournamentsRoutes.get(
     "/football/leaderboard/zimpsl",
     // protect,
     asyncHandler(async (req, res) => {
-        const pageSize = 2;
+        const pageSize = 20;
         const page = Number(req.query.pageNumber) || 1;
         // const keyword = req.query.keyword
         //     ? {
@@ -284,7 +284,12 @@ tournamentsRoutes.get(
             .skip(pageSize * (page - 1))
             .sort({ total_points: -1 });
         
-        playerLeaderboard.forEach(player => { player._req = req });
+        // playerLeaderboard.forEach(player => { player._req = req });
+        // Add position field to each player
+        const startingPosition = (page - 1) * pageSize + 1;
+        playerLeaderboard.forEach((player, index) => {
+            player._doc.position = startingPosition + index;
+        });
         if(playerLeaderboard) {
             res.json({ playerLeaderboard, count, page, pages: Math.ceil(count / pageSize) });
 
@@ -300,7 +305,7 @@ tournamentsRoutes.get(
     "/football/leaderboard/zimpsl/:team",
     // protect,
     asyncHandler(async (req, res) => {
-        const pageSize = 3;
+        const pageSize = 20;
         const page = Number(req.query.pageNumber) || 1;
 
         const count = await ZimpslPLayerTable.countDocuments({ team: req.params.team });
@@ -308,6 +313,11 @@ tournamentsRoutes.get(
             .limit(pageSize)
             .skip(pageSize * (page - 1))
             .sort({ total_points: -1 });
+
+        const startingPosition = (page - 1) * pageSize + 1;
+        playerTeamLeaderboard.forEach((player, index) => {
+            player._doc.position = startingPosition + index;
+        });
         if(playerTeamLeaderboard) {
             res.json({ playerTeamLeaderboard, page, pages: Math.ceil(count / pageSize) });
         } else {

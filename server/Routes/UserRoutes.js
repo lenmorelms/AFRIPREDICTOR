@@ -52,13 +52,17 @@ userRouter.post(
 
     const userExists = await User.findOne({ email });
     const usernameTaken = await User.findOne({ username });
+    const userNotVerifield = await User.findOne({ email, username, verified: false });
 
     if (userExists) {
-      res.status(400);
+      res.status(400)
       throw new Error("Email already in use");
     } else if(usernameTaken) {
       res.status(400);
       throw new Error("Username taken")
+    } else if(userNotVerifield) {
+      res.status(400);
+      throw new Error("User not verified");
     }
     const verificationToken = Math.random().toString(36).substring(7);
 

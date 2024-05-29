@@ -16,13 +16,29 @@ export const transporter = nodemailer.createTransport({
     // }
 });
 
+const html = (heading, message, link) => {
+    return (
+        `<div class="container">
+        <div class="content">
+            <h1>${heading}</h1>
+            <p>${message}</p>
+            <a href=${link} class="activation-button">Activate Account</a>
+            <p>If you did not sign up for this account, you can ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 AfriPredictor. All rights reserved.</p>
+        </div>
+    </div>`
+    )
+};
+
 const sendVerificationEmail = async (email, verificationToken, source) => {
 
     const mailOptions = {
         from: 'lmslernz@gmail.com',
         to: email,
         subject: 'Account Verification',
-        html: source === "register" ? `<p>Please click <a href="https://afripredictor.com/verify/${verificationToken}">here</a> to verify your account.</p>` : `<p>Please click <a href="https://afripredictor.com/reset-password/${verificationToken}">here</a> to reset your password.</p>`
+        html: source === "register" ? html(`Activate Your Account`, `Thank you for signing up! Please click the button below to activate your account:`, `https://afripredictor.com/verify/${verificationToken}`) : html(`Reset Your Password`, `Please click the button below to reset your password:`, `https://afripredictor.com/reset-password/${verificationToken}`)
     };
 
     try {
